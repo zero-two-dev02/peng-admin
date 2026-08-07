@@ -126,3 +126,8 @@ body {
   margin: 0;
   text-align: center;
 }
+
+.login-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
