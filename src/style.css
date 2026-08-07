@@ -71,3 +71,58 @@ body {
   color: #ffffff;
   background: #2563eb;
 }
+
+.login-form {
+  display: grid;
+  width: min(100%, 360px);
+  gap: 20px;
+  padding: 32px;
+  text-align: left;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 10%);
+}
+
+.login-form h1 {
+  text-align: center;
+}
+
+.form-field {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form-field input {
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.form-field input:focus {
+  border-color: #2563eb;
+  outline: 3px solid rgb(37 99 235 / 15%);
+}
+
+.login-button {
+  padding: 11px 16px;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: #2563eb;
+  border: 0;
+  border-radius: 8px;
+}
+
+.login-button:hover {
+  background: #1d4ed8;
+}
+
+.form-message {
+  margin: 0;
+  text-align: center;
+}
