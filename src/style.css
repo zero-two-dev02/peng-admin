@@ -42,3 +42,32 @@ body {
   margin: 12px 0 0;
   color: #6b7280;
 }
+
+.app-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 1;
+  padding: 16px;
+}
+
+.app-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.app-nav a {
+  padding: 8px 16px;
+  color: #4b5563;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.app-nav a:hover {
+  background: #e5e7eb;
+}
+
+.app-nav a.router-link-exact-active {
+  color: #ffffff;
+  background: #2563eb;
+}
