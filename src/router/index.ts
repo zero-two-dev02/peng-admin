@@ -2,12 +2,17 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
+import pinia from '../stores'
+import { useAuthStore } from '../stores/auth'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'home',
     component: HomeView,
+    meta: {
+      requiresAuth: true,
+    },
   },
   {
     path: '/login',
@@ -24,6 +29,18 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+router.beforeEach((to) => {
+  const authStore = useAuthStore(pinia)
+
+  if (to.meta.requiresAuth && !authStore.hasSession) {
+    return { name: 'login' }
+  }
+
+  if (to.name === 'login' && authStore.hasSession) {
+    return { name: 'home' }
+  }
 })
 
 export default router
