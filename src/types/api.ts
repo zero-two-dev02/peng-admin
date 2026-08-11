@@ -3,3 +3,8 @@ export interface CommonResult<T> {
   message: string
   data: T | null
 }
+
+export interface PageResult<T> {
+  list: T[]
+  total: number
+}

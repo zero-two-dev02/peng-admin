@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
+import UserListView from '../views/UserListView.vue'
 import pinia from '../stores'
 import { useAuthStore } from '../stores/auth'
 
@@ -18,6 +19,14 @@ const routes: RouteRecordRaw[] = [
     path: '/login',
     name: 'login',
     component: LoginView,
+  },
+  {
+    path: '/system/users',
+    name: 'user-list',
+    component: UserListView,
+    meta: {
+      requiresAuth: true,
+    },
   },
   {
     path: '/:pathMatch(.*)*',

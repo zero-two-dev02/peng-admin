@@ -131,3 +131,102 @@ body {
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+.user-page {
+  display: grid;
+  gap: 20px;
+  min-height: 100vh;
+  padding: 96px 24px 32px;
+}
+
+.page-toolbar,
+.table-section {
+  width: min(100%, 960px);
+  margin: 0 auto;
+}
+
+.page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+}
+
+.page-toolbar label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.page-toolbar input,
+.page-toolbar select {
+  min-width: 180px;
+  padding: 10px 12px;
+  font: inherit;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.table-section {
+  overflow-x: auto;
+}
+
+.table-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.table-header h1,
+.table-header p {
+  margin: 0;
+}
+
+table {
+  width: 100%;
+  margin-top: 16px;
+  overflow: hidden;
+  text-align: left;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+th,
+td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+th {
+  font-weight: 700;
+  color: #374151;
+  background: #f9fafb;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pagination button {
+  padding: 8px 12px;
+  font: inherit;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
