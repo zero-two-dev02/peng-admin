@@ -35,3 +35,10 @@ export async function getCurrentUser(): Promise<
   )
   return response.data
 }
+
+export async function logout(): Promise<CommonResult<boolean>> {
+  const response = await http.post<CommonResult<boolean>>(
+    '/system/auth/logout',
+  )
+  return response.data
+}
