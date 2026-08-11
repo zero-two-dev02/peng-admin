@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
 import NotFoundView from '../views/NotFoundView.vue'
+import PermissionListView from '../views/PermissionListView.vue'
 import RoleListView from '../views/RoleListView.vue'
 import UserListView from '../views/UserListView.vue'
 import pinia from '../stores'
@@ -33,6 +34,14 @@ const routes: RouteRecordRaw[] = [
     path: '/system/roles',
     name: 'role-list',
     component: RoleListView,
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/system/permissions',
+    name: 'permission-list',
+    component: PermissionListView,
     meta: {
       requiresAuth: true,
     },
