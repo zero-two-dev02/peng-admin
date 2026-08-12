@@ -371,8 +371,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="user-page">
-    <section v-if="canWriteUsers" class="detail-panel">
+  <main class="user-page management-page">
+    <section v-if="canWriteUsers" class="detail-panel create-panel">
       <form class="inline-form" @submit.prevent="handleCreateUser">
         <h1>创建用户</h1>
         <p class="muted-text">新用户默认启用且未分配角色。密码仅用于本次提交，创建后不会回显。</p>
@@ -414,7 +414,7 @@ onMounted(() => {
       </form>
     </section>
 
-    <section class="page-toolbar" aria-label="用户筛选">
+    <section class="page-toolbar management-filter-panel" aria-label="用户筛选">
       <label>
         用户名
         <input v-model.trim="username" type="text" placeholder="输入用户名" />
@@ -439,7 +439,7 @@ onMounted(() => {
       </button>
     </section>
 
-    <section class="table-section">
+    <section class="table-section management-table-panel">
       <header class="table-header">
         <h1>用户列表</h1>
         <p>共 {{ total }} 条</p>
@@ -460,7 +460,11 @@ onMounted(() => {
             <td>{{ user.id }}</td>
             <td>{{ user.username }}</td>
             <td>{{ user.nickname }}</td>
-            <td>{{ getStatusText(user.status) }}</td>
+            <td>
+              <span :class="user.status === 0 ? 'status-badge status-badge-success' : 'status-badge status-badge-neutral'">
+                {{ getStatusText(user.status) }}
+              </span>
+            </td>
             <td>
               <button
                 v-if="canManageUser"
@@ -489,7 +493,7 @@ onMounted(() => {
       </footer>
     </section>
 
-    <section v-if="selectedUser" class="detail-panel">
+    <section v-if="selectedUser" class="detail-panel management-detail-panel">
       <header class="table-header">
         <h2>{{ selectedUser.username }} 的角色</h2>
         <p>用户 ID：{{ selectedUser.id }}</p>
@@ -572,7 +576,7 @@ onMounted(() => {
         <p v-if="passwordMessage" class="form-message">{{ passwordMessage }}</p>
       </form>
 
-      <section v-if="canWriteUsers" class="inline-form">
+      <section v-if="canWriteUsers" class="inline-form danger-zone">
         <h3>删除用户</h3>
         <p class="warning-text">
           删除不可恢复。后端会拒绝删除当前登录用户、最后一个启用管理员，以及仍分配角色的用户。

@@ -338,8 +338,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="user-page">
-    <section v-if="canWriteRoles" class="detail-panel">
+  <main class="user-page management-page">
+    <section v-if="canWriteRoles" class="detail-panel create-panel">
       <form class="inline-form" @submit.prevent="handleCreateRole">
         <h1>创建自定义角色</h1>
         <p class="muted-text">新角色默认启用且不含权限；创建后可在下方单独分配权限。</p>
@@ -366,7 +366,7 @@ onMounted(() => {
       </form>
     </section>
 
-    <section class="page-toolbar" aria-label="角色筛选">
+    <section class="page-toolbar management-filter-panel" aria-label="角色筛选">
       <label>
         角色编码
         <input v-model.trim="code" type="text" placeholder="输入角色编码" />
@@ -391,7 +391,7 @@ onMounted(() => {
       </button>
     </section>
 
-    <section class="table-section">
+    <section class="table-section management-table-panel">
       <header class="table-header">
         <h1>角色列表</h1>
         <p>共 {{ total }} 条</p>
@@ -411,7 +411,11 @@ onMounted(() => {
           <tr v-for="role in roles" :key="role.code">
             <td>{{ role.code }}</td>
             <td>{{ role.name }}</td>
-            <td>{{ getStatusText(role.status) }}</td>
+            <td>
+              <span :class="role.status === 0 ? 'status-badge status-badge-success' : 'status-badge status-badge-neutral'">
+                {{ getStatusText(role.status) }}
+              </span>
+            </td>
             <td>{{ getBuiltInText(role.builtIn) }}</td>
             <td>
               <button
@@ -441,7 +445,7 @@ onMounted(() => {
       </footer>
     </section>
 
-    <section v-if="selectedRole" class="detail-panel">
+    <section v-if="selectedRole" class="detail-panel management-detail-panel">
       <header class="table-header">
         <h2>{{ selectedRole.name }} 的权限</h2>
         <p>共 {{ permissionCodes.length }} 项</p>
@@ -522,7 +526,7 @@ onMounted(() => {
         </footer>
       </section>
 
-      <section class="inline-form">
+      <section class="inline-form danger-zone">
         <h3>删除角色</h3>
         <p class="warning-text">仅能删除未关联用户的自定义角色；内置角色会被后端拒绝。</p>
         <button class="danger-button" type="button" :disabled="isDeletingRole" @click="handleDeleteRole">{{ isDeletingRole ? '删除中...' : '永久删除角色' }}</button>

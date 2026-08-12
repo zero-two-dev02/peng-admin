@@ -143,8 +143,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="user-page">
-    <section v-if="canWritePermissions()" class="detail-panel">
+  <main class="user-page management-page">
+    <section v-if="canWritePermissions()" class="detail-panel create-panel">
       <form class="inline-form" @submit.prevent="handleCreatePermission">
         <h1>创建自定义权限</h1>
         <p class="muted-text">新权限只登记到权限目录，不会自动授予任何角色。</p>
@@ -175,7 +175,7 @@ onMounted(() => {
       </form>
     </section>
 
-    <section class="table-section">
+    <section class="table-section management-table-panel">
       <header class="table-header">
         <h1>权限列表</h1>
         <button
@@ -209,7 +209,7 @@ onMounted(() => {
       </table>
     </section>
 
-    <section v-if="selectedPermission" class="detail-panel">
+    <section v-if="selectedPermission" class="detail-panel management-detail-panel">
       <header class="table-header">
         <h2>编辑权限</h2>
         <p>{{ selectedPermission.code }}</p>
@@ -220,7 +220,7 @@ onMounted(() => {
         <button class="login-button" type="submit" :disabled="isUpdatingPermission">{{ isUpdatingPermission ? '保存中...' : '保存权限名称' }}</button>
         <p v-if="editMessage" class="form-message">{{ editMessage }}</p>
       </form>
-      <section v-if="canDeletePermissions()" class="inline-form">
+      <section v-if="canDeletePermissions()" class="inline-form danger-zone">
         <h3>删除权限</h3>
         <p class="warning-text">仅能删除未被角色引用的自定义权限；内置权限会被后端拒绝。</p>
         <button class="danger-button" type="button" :disabled="isDeletingPermission" @click="handleDeletePermission">{{ isDeletingPermission ? '删除中...' : '永久删除权限' }}</button>
