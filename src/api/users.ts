@@ -55,6 +55,18 @@ export async function getUserPage(
   return response.data
 }
 
+export async function getUser(
+  id: number,
+): Promise<CommonResult<UserPageItem>> {
+  const response = await http.get<CommonResult<UserPageItem>>(
+    '/system/user/get',
+    {
+      params: { id },
+    },
+  )
+  return response.data
+}
+
 export async function createUser(
   request: UserCreateRequest,
 ): Promise<CommonResult<number>> {

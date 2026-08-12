@@ -6,6 +6,7 @@ import {
   assignUserRoles,
   createUser,
   deleteUser,
+  getUser,
   getUserPage,
   getUserRoles,
   resetUserPassword,
@@ -175,6 +176,18 @@ async function handleViewRoles(user: UserPageItem) {
   isLoadingRoles.value = true
 
   try {
+    const userResult = await getUser(user.id)
+
+    if (userResult.code !== 0 || userResult.data === null) {
+      message.value = userResult.message
+      selectedUser.value = null
+      return
+    }
+
+    selectedUser.value = userResult.data
+    editNickname.value = userResult.data.nickname
+    editStatus.value = String(userResult.data.status)
+
     const result = await getUserRoles(user.id)
 
     if (result.code !== 0 || result.data === null) {
