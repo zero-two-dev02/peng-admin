@@ -28,6 +28,7 @@ const routes: RouteRecordRaw[] = [
     component: UserListView,
     meta: {
       requiresAuth: true,
+      requiredPermission: 'system:user:read',
     },
   },
   {
@@ -36,6 +37,7 @@ const routes: RouteRecordRaw[] = [
     component: RoleListView,
     meta: {
       requiresAuth: true,
+      requiredPermission: 'system:role:read',
     },
   },
   {
@@ -44,6 +46,7 @@ const routes: RouteRecordRaw[] = [
     component: PermissionListView,
     meta: {
       requiresAuth: true,
+      requiredPermission: 'system:permission:read',
     },
   },
   {
@@ -63,6 +66,15 @@ router.beforeEach((to) => {
 
   if (to.meta.requiresAuth && !authStore.hasSession) {
     return { name: 'login' }
+  }
+
+  const requiredPermission = to.meta.requiredPermission
+  if (
+    authStore.hasSession &&
+    typeof requiredPermission === 'string' &&
+    !authStore.hasPermission(requiredPermission)
+  ) {
+    return { name: 'home' }
   }
 
   if (to.name === 'login' && authStore.hasSession) {

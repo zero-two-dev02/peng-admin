@@ -36,6 +36,19 @@ export interface RolePermissionAssignRequest {
   permissionCodes: string[]
 }
 
+export interface RoleUserPageRequest {
+  roleCode: string
+  pageNo: number
+  pageSize: number
+}
+
+export interface RoleUserPageItem {
+  id: number
+  username: string
+  nickname: string
+  status: number
+}
+
 export async function getRoleList(): Promise<CommonResult<RoleListItem[]>> {
   const response = await http.get<CommonResult<RoleListItem[]>>(
     '/system/role/list',
@@ -74,6 +87,18 @@ export async function getRolePermissionCodes(
       params: {
         roleCode,
       },
+    },
+  )
+  return response.data
+}
+
+export async function getRoleUserPage(
+  request: RoleUserPageRequest,
+): Promise<CommonResult<PageResult<RoleUserPageItem>>> {
+  const response = await http.get<CommonResult<PageResult<RoleUserPageItem>>>(
+    '/system/role/user-page',
+    {
+      params: request,
     },
   )
   return response.data

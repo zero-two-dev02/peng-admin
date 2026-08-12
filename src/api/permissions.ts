@@ -6,6 +6,11 @@ export interface PermissionListItem {
   name: string
 }
 
+export interface PermissionCreateRequest {
+  code: string
+  name: string
+}
+
 export interface PermissionUpdateRequest {
   code: string
   name: string
@@ -16,6 +21,16 @@ export async function getPermissionList(): Promise<
 > {
   const response = await http.get<CommonResult<PermissionListItem[]>>(
     '/system/permission/list',
+  )
+  return response.data
+}
+
+export async function createPermission(
+  request: PermissionCreateRequest,
+): Promise<CommonResult<number>> {
+  const response = await http.post<CommonResult<number>>(
+    '/system/permission/create',
+    request,
   )
   return response.data
 }

@@ -11,6 +11,7 @@ export const useAuthStore = defineStore('auth', () => {
   const userId = ref<number | null>(null)
   const accessToken = ref<string | null>(null)
   const expiresTime = ref<string | null>(null)
+  const permissions = ref<string[]>([])
 
   const hasSession = computed(() => accessToken.value !== null)
 
@@ -24,14 +25,26 @@ export const useAuthStore = defineStore('auth', () => {
     userId.value = null
     accessToken.value = null
     expiresTime.value = null
+    permissions.value = []
+  }
+
+  function setPermissions(value: string[]) {
+    permissions.value = value
+  }
+
+  function hasPermission(permission: string) {
+    return permissions.value.includes(permission)
   }
 
   return {
     userId,
     accessToken,
     expiresTime,
+    permissions,
     hasSession,
     setSession,
+    setPermissions,
+    hasPermission,
     clearSession,
   }
 })

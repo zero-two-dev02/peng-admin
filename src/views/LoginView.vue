@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { login } from '../api/auth'
+import { getCurrentUser, login } from '../api/auth'
 import { useAuthStore } from '../stores/auth'
 import { useRouter } from 'vue-router'
 
@@ -24,6 +24,7 @@ async function handleSubmit() {
 
     message.value = ''
     isSubmitting.value = true
+    let sessionEstablished = false
 
     try {
         const result = await login({
@@ -37,9 +38,21 @@ async function handleSubmit() {
         }
 
         authStore.setSession(result.data)
+        sessionEstablished = true
+        const currentUserResult = await getCurrentUser()
+        if (currentUserResult.code !== 0 || currentUserResult.data === null) {
+            authStore.clearSession()
+            message.value = currentUserResult.message
+            return
+        }
+
+        authStore.setPermissions(currentUserResult.data.permissions)
         password.value = ''
         await router.push({ name: 'home' })
     } catch {
+        if (sessionEstablished) {
+            authStore.clearSession()
+        }
         message.value = '无法连接服务器，请稍后重试'
     } finally {
         isSubmitting.value = false

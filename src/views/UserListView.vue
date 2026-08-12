@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { getRoleList, type RoleListItem } from '../api/roles'
+import { useAuthStore } from '../stores/auth'
 import {
   assignUserRoles,
   createUser,
@@ -43,6 +44,7 @@ const isAssigningRoles = ref(false)
 const isResettingPassword = ref(false)
 const isCreatingUser = ref(false)
 const isDeletingUser = ref(false)
+const authStore = useAuthStore()
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const canGoPrevious = computed(() => pageNo.value > 1 && !isLoading.value)
@@ -57,6 +59,23 @@ const canSubmitRoles = computed(
     selectedUser.value !== null &&
     disabledAssignedRoles.value.length === 0 &&
     !isAssigningRoles.value,
+)
+const canReadUserRoles = computed(() =>
+  authStore.hasPermission('system:user:role:read'),
+)
+const canWriteUsers = computed(() => authStore.hasPermission('system:user:write'))
+const canAssignUserRoles = computed(() =>
+  authStore.hasPermission('system:user:role:assign'),
+)
+const canResetUserPassword = computed(() =>
+  authStore.hasPermission('system:user:password:reset'),
+)
+const canManageUser = computed(
+  () =>
+    canReadUserRoles.value ||
+    canWriteUsers.value ||
+    canAssignUserRoles.value ||
+    canResetUserPassword.value,
 )
 
 function getStatusText(userStatus: number) {
@@ -340,7 +359,7 @@ onMounted(() => {
 
 <template>
   <main class="user-page">
-    <section class="detail-panel">
+    <section v-if="canWriteUsers" class="detail-panel">
       <form class="inline-form" @submit.prevent="handleCreateUser">
         <h1>创建用户</h1>
         <p class="muted-text">新用户默认启用且未分配角色。密码仅用于本次提交，创建后不会回显。</p>
@@ -431,11 +450,12 @@ onMounted(() => {
             <td>{{ getStatusText(user.status) }}</td>
             <td>
               <button
+                v-if="canManageUser"
                 class="text-button"
                 type="button"
                 @click="handleViewRoles(user)"
               >
-                查看角色
+                管理用户
               </button>
             </td>
           </tr>
@@ -485,7 +505,7 @@ onMounted(() => {
         </tbody>
       </table>
 
-      <form class="inline-form" @submit.prevent="handleUpdateUser">
+      <form v-if="canWriteUsers" class="inline-form" @submit.prevent="handleUpdateUser">
         <h3>更新基本信息</h3>
         <label>
           昵称
@@ -504,7 +524,7 @@ onMounted(() => {
         <p v-if="editMessage" class="form-message">{{ editMessage }}</p>
       </form>
 
-      <form class="inline-form" @submit.prevent="handleAssignRoles">
+      <form v-if="canAssignUserRoles" class="inline-form" @submit.prevent="handleAssignRoles">
         <h3>分配角色</h3>
         <p v-if="disabledAssignedRoles.length > 0" class="warning-text">
           当前用户存在停用角色，页面不会提交角色变更，避免完整替换时隐式移除这些角色。
@@ -526,7 +546,7 @@ onMounted(() => {
         <p v-if="assignMessage" class="form-message">{{ assignMessage }}</p>
       </form>
 
-      <form class="inline-form" @submit.prevent="handleResetPassword">
+      <form v-if="canResetUserPassword" class="inline-form" @submit.prevent="handleResetPassword">
         <h3>重置密码</h3>
         <p class="warning-text">保存后无法读取旧密码，并会使该用户当前登录态失效。</p>
         <label>
@@ -539,7 +559,7 @@ onMounted(() => {
         <p v-if="passwordMessage" class="form-message">{{ passwordMessage }}</p>
       </form>
 
-      <section class="inline-form">
+      <section v-if="canWriteUsers" class="inline-form">
         <h3>删除用户</h3>
         <p class="warning-text">
           删除不可恢复。后端会拒绝删除当前登录用户、最后一个启用管理员，以及仍分配角色的用户。

@@ -1,21 +1,33 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import {
+  createPermission,
   deletePermission,
   getPermissionList,
   updatePermission,
   type PermissionListItem,
 } from '../api/permissions'
+import { useAuthStore } from '../stores/auth'
 
 const permissions = ref<PermissionListItem[]>([])
 const message = ref('')
 const isLoading = ref(false)
+const createCode = ref('')
+const createName = ref('')
+const createMessage = ref('')
+const isCreatingPermission = ref(false)
 const selectedPermission = ref<PermissionListItem | null>(null)
 const editName = ref('')
 const editMessage = ref('')
 const deleteMessage = ref('')
 const isUpdatingPermission = ref(false)
 const isDeletingPermission = ref(false)
+const authStore = useAuthStore()
+
+const canWritePermissions = () =>
+  authStore.hasPermission('system:permission:write')
+const canDeletePermissions = () =>
+  authStore.hasPermission('system:permission:delete')
 
 async function loadPermissions() {
   if (isLoading.value) {
@@ -40,6 +52,41 @@ async function loadPermissions() {
     message.value = '无法连接服务器，请稍后重试'
   } finally {
     isLoading.value = false
+  }
+}
+
+async function handleCreatePermission() {
+  if (isCreatingPermission.value) {
+    return
+  }
+
+  createMessage.value = ''
+  isCreatingPermission.value = true
+
+  try {
+    const result = await createPermission({
+      code: createCode.value,
+      name: createName.value,
+    })
+
+    if (result.code !== 0 || result.data === null) {
+      createMessage.value = result.message
+      return
+    }
+
+    const createdCode = createCode.value
+    createCode.value = ''
+    createName.value = ''
+    await loadPermissions()
+    selectedPermission.value =
+      permissions.value.find((permission) => permission.code === createdCode) ??
+      null
+    editName.value = selectedPermission.value?.name ?? ''
+    createMessage.value = `权限 ${createdCode} 已创建，尚未授予任何角色。`
+  } catch {
+    createMessage.value = '无法连接服务器，请稍后重试。'
+  } finally {
+    isCreatingPermission.value = false
   }
 }
 
@@ -97,6 +144,37 @@ onMounted(() => {
 
 <template>
   <main class="user-page">
+    <section v-if="canWritePermissions()" class="detail-panel">
+      <form class="inline-form" @submit.prevent="handleCreatePermission">
+        <h1>创建自定义权限</h1>
+        <p class="muted-text">新权限只登记到权限目录，不会自动授予任何角色。</p>
+        <label>
+          权限编码
+          <input
+            v-model.trim="createCode"
+            type="text"
+            minlength="3"
+            maxlength="128"
+            pattern="[a-z][a-z0-9:._-]*"
+            placeholder="例如 system:report:read"
+            required
+          />
+        </label>
+        <label>
+          权限名称
+          <input v-model.trim="createName" type="text" maxlength="64" required />
+        </label>
+        <button
+          class="login-button"
+          type="submit"
+          :disabled="isCreatingPermission"
+        >
+          {{ isCreatingPermission ? '创建中...' : '创建权限' }}
+        </button>
+        <p v-if="createMessage" class="form-message">{{ createMessage }}</p>
+      </form>
+    </section>
+
     <section class="table-section">
       <header class="table-header">
         <h1>权限列表</h1>
@@ -122,7 +200,7 @@ onMounted(() => {
           <tr v-for="permission in permissions" :key="permission.code">
             <td>{{ permission.code }}</td>
             <td>{{ permission.name }}</td>
-            <td><button class="text-button" type="button" @click="handleSelectPermission(permission)">编辑</button></td>
+            <td><button v-if="canWritePermissions()" class="text-button" type="button" @click="handleSelectPermission(permission)">编辑</button></td>
           </tr>
           <tr v-if="permissions.length === 0">
             <td colspan="3">{{ message || '暂无数据' }}</td>
@@ -142,7 +220,7 @@ onMounted(() => {
         <button class="login-button" type="submit" :disabled="isUpdatingPermission">{{ isUpdatingPermission ? '保存中...' : '保存权限名称' }}</button>
         <p v-if="editMessage" class="form-message">{{ editMessage }}</p>
       </form>
-      <section class="inline-form">
+      <section v-if="canDeletePermissions()" class="inline-form">
         <h3>删除权限</h3>
         <p class="warning-text">仅能删除未被角色引用的自定义权限；内置权限会被后端拒绝。</p>
         <button class="danger-button" type="button" :disabled="isDeletingPermission" @click="handleDeletePermission">{{ isDeletingPermission ? '删除中...' : '永久删除权限' }}</button>

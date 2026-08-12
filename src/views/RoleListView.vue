@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { getPermissionList, type PermissionListItem } from '../api/permissions'
+import { useAuthStore } from '../stores/auth'
 import {
   assignRolePermissions,
   createRole,
   deleteRole,
   getRolePage,
   getRolePermissionCodes,
+  getRoleUserPage,
   updateRole,
   type RolePageItem,
+  type RoleUserPageItem,
 } from '../api/roles'
 
 const pageNo = ref(1)
@@ -23,6 +26,9 @@ const selectedRole = ref<RolePageItem | null>(null)
 const permissionCodes = ref<string[]>([])
 const permissionOptions = ref<PermissionListItem[]>([])
 const selectedPermissionCodes = ref<string[]>([])
+const roleUsers = ref<RoleUserPageItem[]>([])
+const roleUserPageNo = ref(1)
+const roleUserTotal = ref(0)
 const editName = ref('')
 const editStatus = ref('0')
 const message = ref('')
@@ -33,15 +39,37 @@ const deleteMessage = ref('')
 const createMessage = ref('')
 const isLoading = ref(false)
 const isLoadingPermissions = ref(false)
+const isLoadingRoleUsers = ref(false)
 const isUpdatingRole = ref(false)
 const isAssigningPermissions = ref(false)
 const isDeletingRole = ref(false)
 const isCreatingRole = ref(false)
+const authStore = useAuthStore()
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
+const roleUserTotalPages = computed(() =>
+  Math.max(1, Math.ceil(roleUserTotal.value / pageSize)),
+)
 const canGoPrevious = computed(() => pageNo.value > 1 && !isLoading.value)
 const canGoNext = computed(
   () => pageNo.value < totalPages.value && !isLoading.value,
+)
+const canWriteRoles = computed(() => authStore.hasPermission('system:role:write'))
+const canReadRolePermissions = computed(() =>
+  authStore.hasPermission('system:role:permission:read'),
+)
+const canAssignRolePermissions = computed(() =>
+  authStore.hasPermission('system:role:permission:assign'),
+)
+const canDeleteRoles = computed(() =>
+  authStore.hasPermission('system:role:delete'),
+)
+const canManageRole = computed(
+  () =>
+    canReadRolePermissions.value ||
+    canWriteRoles.value ||
+    canAssignRolePermissions.value ||
+    canDeleteRoles.value,
 )
 
 function getStatusText(roleStatus: number) {
@@ -127,6 +155,9 @@ async function handleCreateRole() {
 async function handleViewPermissions(role: RolePageItem) {
   selectedRole.value = role
   permissionCodes.value = []
+  roleUsers.value = []
+  roleUserPageNo.value = 1
+  roleUserTotal.value = 0
   permissionMessage.value = ''
   editMessage.value = ''
   assignMessage.value = ''
@@ -134,6 +165,7 @@ async function handleViewPermissions(role: RolePageItem) {
   editName.value = role.name
   editStatus.value = String(role.status)
   isLoadingPermissions.value = true
+  void loadRoleUsers()
 
   try {
     const result = await getRolePermissionCodes(role.code)
@@ -156,6 +188,57 @@ async function handleViewPermissions(role: RolePageItem) {
   } finally {
     isLoadingPermissions.value = false
   }
+}
+
+async function loadRoleUsers() {
+  if (selectedRole.value === null || isLoadingRoleUsers.value) {
+    return
+  }
+
+  isLoadingRoleUsers.value = true
+
+  try {
+    const result = await getRoleUserPage({
+      roleCode: selectedRole.value.code,
+      pageNo: roleUserPageNo.value,
+      pageSize,
+    })
+
+    if (result.code !== 0 || result.data === null) {
+      roleUsers.value = []
+      roleUserTotal.value = 0
+      return
+    }
+
+    roleUsers.value = result.data.list
+    roleUserTotal.value = result.data.total
+  } catch {
+    roleUsers.value = []
+    roleUserTotal.value = 0
+  } finally {
+    isLoadingRoleUsers.value = false
+  }
+}
+
+function handlePreviousRoleUserPage() {
+  if (roleUserPageNo.value <= 1 || isLoadingRoleUsers.value) {
+    return
+  }
+
+  roleUserPageNo.value -= 1
+  void loadRoleUsers()
+}
+
+function handleNextRoleUserPage() {
+  if (
+    roleUserPageNo.value >= roleUserTotalPages.value ||
+    isLoadingRoleUsers.value
+  ) {
+    return
+  }
+
+  roleUserPageNo.value += 1
+  void loadRoleUsers()
 }
 
 async function handleUpdateRole() {
@@ -216,6 +299,8 @@ async function handleDeleteRole() {
     createMessage.value = ''
     selectedRole.value = null
     permissionCodes.value = []
+    roleUsers.value = []
+    roleUserTotal.value = 0
     await loadRoles()
   } catch {
     deleteMessage.value = '无法连接服务器，请稍后重试。'
@@ -254,7 +339,7 @@ onMounted(() => {
 
 <template>
   <main class="user-page">
-    <section class="detail-panel">
+    <section v-if="canWriteRoles" class="detail-panel">
       <form class="inline-form" @submit.prevent="handleCreateRole">
         <h1>创建自定义角色</h1>
         <p class="muted-text">新角色默认启用且不含权限；创建后可在下方单独分配权限。</p>
@@ -330,11 +415,12 @@ onMounted(() => {
             <td>{{ getBuiltInText(role.builtIn) }}</td>
             <td>
               <button
+                v-if="canManageRole"
                 class="text-button"
                 type="button"
                 @click="handleViewPermissions(role)"
               >
-                查看权限
+                管理角色
               </button>
             </td>
           </tr>
@@ -372,7 +458,7 @@ onMounted(() => {
         <span v-if="permissionCodes.length === 0">暂无权限</span>
       </div>
 
-      <form class="inline-form" @submit.prevent="handleUpdateRole">
+      <form v-if="canWriteRoles" class="inline-form" @submit.prevent="handleUpdateRole">
         <h3>更新角色信息</h3>
         <label>角色名称<input v-model.trim="editName" type="text" maxlength="64" /></label>
         <label>状态<select v-model="editStatus"><option value="0">启用</option><option value="1">停用</option></select></label>
@@ -380,7 +466,7 @@ onMounted(() => {
         <p v-if="editMessage" class="form-message">{{ editMessage }}</p>
       </form>
 
-      <form class="inline-form" @submit.prevent="handleAssignPermissions">
+      <form v-if="canAssignRolePermissions" class="inline-form" @submit.prevent="handleAssignPermissions">
         <h3>分配权限</h3>
         <p class="warning-text">保存会整体替换此角色当前拥有的权限。</p>
         <div class="checkbox-grid">
@@ -392,6 +478,49 @@ onMounted(() => {
         <button class="login-button" type="submit" :disabled="isAssigningPermissions">{{ isAssigningPermissions ? '保存中...' : '保存权限分配' }}</button>
         <p v-if="assignMessage" class="form-message">{{ assignMessage }}</p>
       </form>
+
+      <section v-if="canDeleteRoles" class="inline-form">
+        <h3>角色成员</h3>
+        <p v-if="isLoadingRoleUsers" class="muted-text">读取中...</p>
+        <table v-else>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>用户名</th>
+              <th>昵称</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in roleUsers" :key="user.id">
+              <td>{{ user.id }}</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.nickname }}</td>
+              <td>{{ getStatusText(user.status) }}</td>
+            </tr>
+            <tr v-if="roleUsers.length === 0">
+              <td colspan="4">暂无成员</td>
+            </tr>
+          </tbody>
+        </table>
+        <footer class="pagination">
+          <button
+            type="button"
+            :disabled="roleUserPageNo <= 1 || isLoadingRoleUsers"
+            @click="handlePreviousRoleUserPage"
+          >
+            上一页
+          </button>
+          <span>第 {{ roleUserPageNo }} / {{ roleUserTotalPages }} 页</span>
+          <button
+            type="button"
+            :disabled="roleUserPageNo >= roleUserTotalPages || isLoadingRoleUsers"
+            @click="handleNextRoleUserPage"
+          >
+            下一页
+          </button>
+        </footer>
+      </section>
 
       <section class="inline-form">
         <h3>删除角色</h3>

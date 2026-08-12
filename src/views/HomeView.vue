@@ -35,6 +35,7 @@ async function handleLoadCurrentUser() {
     }
 
     currentUser.value = result.data
+    authStore.setPermissions(result.data.permissions)
   } catch {
     currentUser.value = null
     message.value = '无法连接服务器'
