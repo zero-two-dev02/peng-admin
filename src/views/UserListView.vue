@@ -5,6 +5,7 @@ import {
   assignUserRoles,
   getUserPage,
   getUserRoles,
+  resetUserPassword,
   updateUser,
   type UserPageItem,
   type UserRoleItem,
@@ -22,14 +23,17 @@ const roleOptions = ref<RoleListItem[]>([])
 const selectedRoleCodes = ref<string[]>([])
 const editNickname = ref('')
 const editStatus = ref('0')
+const resetPassword = ref('')
 const message = ref('')
 const roleMessage = ref('')
 const editMessage = ref('')
 const assignMessage = ref('')
+const passwordMessage = ref('')
 const isLoading = ref(false)
 const isLoadingRoles = ref(false)
 const isUpdatingUser = ref(false)
 const isAssigningRoles = ref(false)
+const isResettingPassword = ref(false)
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const canGoPrevious = computed(() => pageNo.value > 1 && !isLoading.value)
@@ -102,6 +106,7 @@ async function handleViewRoles(user: UserPageItem) {
   roleMessage.value = ''
   editMessage.value = ''
   assignMessage.value = ''
+  passwordMessage.value = ''
   editNickname.value = user.nickname
   editStatus.value = String(user.status)
   isLoadingRoles.value = true
@@ -186,6 +191,42 @@ async function handleAssignRoles() {
     assignMessage.value = '无法连接服务器，请稍后重试'
   } finally {
     isAssigningRoles.value = false
+  }
+}
+
+async function handleResetPassword() {
+  if (
+    selectedUser.value === null ||
+    isResettingPassword.value ||
+    resetPassword.value.length < 8
+  ) {
+    return
+  }
+
+  if (!window.confirm(`确认重置用户 ${selectedUser.value.username} 的密码吗？该用户当前登录态将立即失效。`)) {
+    return
+  }
+
+  passwordMessage.value = ''
+  isResettingPassword.value = true
+
+  try {
+    const result = await resetUserPassword({
+      id: selectedUser.value.id,
+      password: resetPassword.value,
+    })
+
+    if (result.code !== 0 || result.data !== true) {
+      passwordMessage.value = result.message
+      return
+    }
+
+    resetPassword.value = ''
+    passwordMessage.value = '密码已重置，用户需要使用新密码重新登录。'
+  } catch {
+    passwordMessage.value = '无法连接服务器，请稍后重试。'
+  } finally {
+    isResettingPassword.value = false
   }
 }
 
@@ -361,6 +402,19 @@ onMounted(() => {
           {{ isAssigningRoles ? '保存中...' : '保存角色分配' }}
         </button>
         <p v-if="assignMessage" class="form-message">{{ assignMessage }}</p>
+      </form>
+
+      <form class="inline-form" @submit.prevent="handleResetPassword">
+        <h3>重置密码</h3>
+        <p class="warning-text">保存后无法读取旧密码，并会使该用户当前登录态失效。</p>
+        <label>
+          新密码
+          <input v-model="resetPassword" type="password" minlength="8" maxlength="64" autocomplete="new-password" />
+        </label>
+        <button class="danger-button" type="submit" :disabled="isResettingPassword || resetPassword.length < 8">
+          {{ isResettingPassword ? '重置中...' : '重置用户密码' }}
+        </button>
+        <p v-if="passwordMessage" class="form-message">{{ passwordMessage }}</p>
       </form>
     </section>
 

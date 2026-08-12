@@ -49,8 +49,12 @@
 - 已完成角色分页列表：`GET /system/role/page`，支持角色编码和状态筛选。
 - 已完成用户基本信息更新：`PUT /system/user/update`，只更新昵称和状态。
 - 已完成用户角色分配：`PUT /system/user/assign-roles`，用完整角色编码集合替换用户角色。
+- 已完成角色权限分配：`PUT /system/role/assign-permissions`，通过确认提示后用完整权限编码集合替换角色权限。
+- 已完成用户密码重置：`PUT /system/user/reset-password`，前端不回显密码，并提示重置会使目标用户的当前登录态失效。
+- 已完成角色基本信息编辑与删除：`PUT /system/role/update`、`DELETE /system/role/delete`，删除前要求确认。
+- 已完成权限名称编辑与删除：`PUT /system/permission/update`、`DELETE /system/permission/delete`，删除前要求确认。
 
 ## 下一步
 
-- 继续推进角色权限分配、用户密码重置或角色/权限写操作；涉及授权、删除、重置密码等高风险写操作时先讲清楚边界。
-- 写接口前先读后端契约；涉及授权分配、删除、重置密码等高风险写操作时，先讲清楚边界再开发。
+- 后续可继续推进用户、角色、权限的创建操作，或进入菜单与前端细粒度权限控制；涉及授权、删除、重置密码等高风险写操作时先讲清楚边界。
+- 写接口前先读后端契约；前端权限控制仅改善体验，后端接口鉴权仍是安全边界。

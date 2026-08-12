@@ -32,6 +32,11 @@ export interface UserRoleAssignRequest {
   roleCodes: string[]
 }
 
+export interface UserPasswordResetRequest {
+  id: number
+  password: string
+}
+
 export async function getUserPage(
   request: UserPageRequest,
 ): Promise<CommonResult<PageResult<UserPageItem>>> {
@@ -73,6 +78,16 @@ export async function assignUserRoles(
 ): Promise<CommonResult<boolean>> {
   const response = await http.put<CommonResult<boolean>>(
     '/system/user/assign-roles',
+    request,
+  )
+  return response.data
+}
+
+export async function resetUserPassword(
+  request: UserPasswordResetRequest,
+): Promise<CommonResult<boolean>> {
+  const response = await http.put<CommonResult<boolean>>(
+    '/system/user/reset-password',
     request,
   )
   return response.data
