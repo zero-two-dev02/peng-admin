@@ -2,11 +2,16 @@
 import { ref } from 'vue'
 import { getCurrentUser, login } from '../api/auth'
 import { useAuthStore } from '../stores/auth'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 const username = ref('')
 const password = ref('')
-const message = ref('')
+const route = useRoute()
+const message = ref(
+    route.query.passwordUpdated === '1'
+        ? '密码修改成功，请使用新密码重新登录'
+        : '',
+)
 const isSubmitting = ref(false)
 
 const authStore = useAuthStore()

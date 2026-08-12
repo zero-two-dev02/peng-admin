@@ -17,6 +17,11 @@ export interface CurrentUserResponse {
   permissions: string[]
 }
 
+export interface CurrentUserPasswordUpdateRequest {
+  oldPassword: string
+  newPassword: string
+}
+
 export async function login(
   request: LoginRequest,
 ): Promise<CommonResult<LoginResponse>> {
@@ -39,6 +44,16 @@ export async function getCurrentUser(): Promise<
 export async function logout(): Promise<CommonResult<boolean>> {
   const response = await http.post<CommonResult<boolean>>(
     '/system/auth/logout',
+  )
+  return response.data
+}
+
+export async function updateCurrentUserPassword(
+  request: CurrentUserPasswordUpdateRequest,
+): Promise<CommonResult<boolean>> {
+  const response = await http.put<CommonResult<boolean>>(
+    '/system/auth/update-password',
+    request,
   )
   return response.data
 }
