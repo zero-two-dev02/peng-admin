@@ -15,6 +15,12 @@ export interface UserPageItem {
   status: number
 }
 
+export interface UserCreateRequest {
+  username: string
+  password: string
+  nickname: string
+}
+
 export interface UserRoleItem {
   code: string
   name: string
@@ -45,6 +51,16 @@ export async function getUserPage(
     {
       params: request,
     },
+  )
+  return response.data
+}
+
+export async function createUser(
+  request: UserCreateRequest,
+): Promise<CommonResult<number>> {
+  const response = await http.post<CommonResult<number>>(
+    '/system/user/create',
+    request,
   )
   return response.data
 }
@@ -89,6 +105,16 @@ export async function resetUserPassword(
   const response = await http.put<CommonResult<boolean>>(
     '/system/user/reset-password',
     request,
+  )
+  return response.data
+}
+
+export async function deleteUser(id: number): Promise<CommonResult<boolean>> {
+  const response = await http.delete<CommonResult<boolean>>(
+    '/system/user/delete',
+    {
+      params: { id },
+    },
   )
   return response.data
 }

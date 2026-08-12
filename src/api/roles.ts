@@ -20,6 +20,11 @@ export interface RolePageItem {
   builtIn: boolean
 }
 
+export interface RoleCreateRequest {
+  code: string
+  name: string
+}
+
 export interface RoleUpdateRequest {
   roleCode: string
   name: string
@@ -46,6 +51,16 @@ export async function getRolePage(
     {
       params: request,
     },
+  )
+  return response.data
+}
+
+export async function createRole(
+  request: RoleCreateRequest,
+): Promise<CommonResult<number>> {
+  const response = await http.post<CommonResult<number>>(
+    '/system/role/create',
+    request,
   )
   return response.data
 }

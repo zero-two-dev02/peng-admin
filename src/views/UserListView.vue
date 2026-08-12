@@ -3,6 +3,8 @@ import { computed, onMounted, ref } from 'vue'
 import { getRoleList, type RoleListItem } from '../api/roles'
 import {
   assignUserRoles,
+  createUser,
+  deleteUser,
   getUserPage,
   getUserRoles,
   resetUserPassword,
@@ -15,6 +17,9 @@ const pageNo = ref(1)
 const pageSize = 10
 const username = ref('')
 const status = ref('')
+const createUsername = ref('')
+const createNickname = ref('')
+const createPassword = ref('')
 const users = ref<UserPageItem[]>([])
 const total = ref(0)
 const selectedUser = ref<UserPageItem | null>(null)
@@ -29,11 +34,15 @@ const roleMessage = ref('')
 const editMessage = ref('')
 const assignMessage = ref('')
 const passwordMessage = ref('')
+const createMessage = ref('')
+const deleteMessage = ref('')
 const isLoading = ref(false)
 const isLoadingRoles = ref(false)
 const isUpdatingUser = ref(false)
 const isAssigningRoles = ref(false)
 const isResettingPassword = ref(false)
+const isCreatingUser = ref(false)
+const isDeletingUser = ref(false)
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const canGoPrevious = computed(() => pageNo.value > 1 && !isLoading.value)
@@ -85,6 +94,41 @@ async function loadUsers() {
     message.value = '无法连接服务器，请稍后重试'
   } finally {
     isLoading.value = false
+  }
+}
+
+async function handleCreateUser() {
+  if (isCreatingUser.value) {
+    return
+  }
+
+  createMessage.value = ''
+  isCreatingUser.value = true
+
+  try {
+    const result = await createUser({
+      username: createUsername.value,
+      nickname: createNickname.value,
+      password: createPassword.value,
+    })
+
+    if (result.code !== 0 || result.data === null) {
+      createMessage.value = result.message
+      return
+    }
+
+    const createdUsername = createUsername.value
+    createUsername.value = ''
+    createNickname.value = ''
+    createPassword.value = ''
+    username.value = createdUsername
+    pageNo.value = 1
+    await loadUsers()
+    createMessage.value = `用户 ${createdUsername} 已创建，默认启用。`
+  } catch {
+    createMessage.value = '无法连接服务器，请稍后重试。'
+  } finally {
+    isCreatingUser.value = false
   }
 }
 
@@ -230,6 +274,42 @@ async function handleResetPassword() {
   }
 }
 
+async function handleDeleteUser() {
+  if (selectedUser.value === null || isDeletingUser.value) {
+    return
+  }
+
+  if (
+    !window.confirm(
+      `确认永久删除用户 ${selectedUser.value.username} 吗？此操作不可恢复；请先确保该用户不再分配任何角色。`,
+    )
+  ) {
+    return
+  }
+
+  deleteMessage.value = ''
+  isDeletingUser.value = true
+
+  try {
+    const result = await deleteUser(selectedUser.value.id)
+
+    if (result.code !== 0 || result.data !== true) {
+      deleteMessage.value = result.message
+      return
+    }
+
+    createMessage.value = ''
+    selectedUser.value = null
+    userRoles.value = []
+    selectedRoleCodes.value = []
+    await loadUsers()
+  } catch {
+    deleteMessage.value = '无法连接服务器，请稍后重试。'
+  } finally {
+    isDeletingUser.value = false
+  }
+}
+
 function handleSearch() {
   pageNo.value = 1
   void loadUsers()
@@ -260,6 +340,48 @@ onMounted(() => {
 
 <template>
   <main class="user-page">
+    <section class="detail-panel">
+      <form class="inline-form" @submit.prevent="handleCreateUser">
+        <h1>创建用户</h1>
+        <p class="muted-text">新用户默认启用且未分配角色。密码仅用于本次提交，创建后不会回显。</p>
+        <label>
+          用户名
+          <input
+            v-model.trim="createUsername"
+            type="text"
+            minlength="4"
+            maxlength="32"
+            pattern="[A-Za-z0-9_]+"
+            placeholder="4-32 位字母、数字或下划线"
+            required
+          />
+        </label>
+        <label>
+          昵称
+          <input v-model.trim="createNickname" type="text" maxlength="64" required />
+        </label>
+        <label>
+          初始密码
+          <input
+            v-model="createPassword"
+            type="password"
+            minlength="8"
+            maxlength="64"
+            autocomplete="new-password"
+            required
+          />
+        </label>
+        <button
+          class="login-button"
+          type="submit"
+          :disabled="isCreatingUser"
+        >
+          {{ isCreatingUser ? '创建中...' : '创建用户' }}
+        </button>
+        <p v-if="createMessage" class="form-message">{{ createMessage }}</p>
+      </form>
+    </section>
+
     <section class="page-toolbar" aria-label="用户筛选">
       <label>
         用户名
@@ -416,6 +538,22 @@ onMounted(() => {
         </button>
         <p v-if="passwordMessage" class="form-message">{{ passwordMessage }}</p>
       </form>
+
+      <section class="inline-form">
+        <h3>删除用户</h3>
+        <p class="warning-text">
+          删除不可恢复。后端会拒绝删除当前登录用户、最后一个启用管理员，以及仍分配角色的用户。
+        </p>
+        <button
+          class="danger-button"
+          type="button"
+          :disabled="isDeletingUser"
+          @click="handleDeleteUser"
+        >
+          {{ isDeletingUser ? '删除中...' : '永久删除用户' }}
+        </button>
+        <p v-if="deleteMessage" class="form-message">{{ deleteMessage }}</p>
+      </section>
     </section>
 
     <p v-if="message && users.length > 0" class="form-message">{{ message }}</p>

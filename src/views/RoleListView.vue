@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { getPermissionList, type PermissionListItem } from '../api/permissions'
 import {
   assignRolePermissions,
+  createRole,
   deleteRole,
   getRolePage,
   getRolePermissionCodes,
@@ -14,6 +15,8 @@ const pageNo = ref(1)
 const pageSize = 10
 const code = ref('')
 const status = ref('')
+const createCode = ref('')
+const createName = ref('')
 const roles = ref<RolePageItem[]>([])
 const total = ref(0)
 const selectedRole = ref<RolePageItem | null>(null)
@@ -27,11 +30,13 @@ const permissionMessage = ref('')
 const editMessage = ref('')
 const assignMessage = ref('')
 const deleteMessage = ref('')
+const createMessage = ref('')
 const isLoading = ref(false)
 const isLoadingPermissions = ref(false)
 const isUpdatingRole = ref(false)
 const isAssigningPermissions = ref(false)
 const isDeletingRole = ref(false)
+const isCreatingRole = ref(false)
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / pageSize)))
 const canGoPrevious = computed(() => pageNo.value > 1 && !isLoading.value)
@@ -78,6 +83,44 @@ async function loadRoles() {
     message.value = '无法连接服务器，请稍后重试'
   } finally {
     isLoading.value = false
+  }
+}
+
+async function handleCreateRole() {
+  if (isCreatingRole.value) {
+    return
+  }
+
+  createMessage.value = ''
+  isCreatingRole.value = true
+
+  try {
+    const result = await createRole({
+      code: createCode.value,
+      name: createName.value,
+    })
+
+    if (result.code !== 0 || result.data === null) {
+      createMessage.value = result.message
+      return
+    }
+
+    const createdCode = createCode.value
+    createCode.value = ''
+    createName.value = ''
+    code.value = createdCode
+    pageNo.value = 1
+    await loadRoles()
+
+    const createdRole = roles.value.find((role) => role.code === createdCode)
+    if (createdRole) {
+      await handleViewPermissions(createdRole)
+    }
+    createMessage.value = `角色 ${createdCode} 已创建，默认启用且未分配权限。`
+  } catch {
+    createMessage.value = '无法连接服务器，请稍后重试。'
+  } finally {
+    isCreatingRole.value = false
   }
 }
 
@@ -170,6 +213,7 @@ async function handleDeleteRole() {
       deleteMessage.value = result.message
       return
     }
+    createMessage.value = ''
     selectedRole.value = null
     permissionCodes.value = []
     await loadRoles()
@@ -210,6 +254,33 @@ onMounted(() => {
 
 <template>
   <main class="user-page">
+    <section class="detail-panel">
+      <form class="inline-form" @submit.prevent="handleCreateRole">
+        <h1>创建自定义角色</h1>
+        <p class="muted-text">新角色默认启用且不含权限；创建后可在下方单独分配权限。</p>
+        <label>
+          角色编码
+          <input
+            v-model.trim="createCode"
+            type="text"
+            minlength="3"
+            maxlength="64"
+            pattern="[a-z][a-z0-9_-]*"
+            placeholder="例如 auditor"
+            required
+          />
+        </label>
+        <label>
+          角色名称
+          <input v-model.trim="createName" type="text" maxlength="64" required />
+        </label>
+        <button class="login-button" type="submit" :disabled="isCreatingRole">
+          {{ isCreatingRole ? '创建中...' : '创建角色' }}
+        </button>
+        <p v-if="createMessage" class="form-message">{{ createMessage }}</p>
+      </form>
+    </section>
+
     <section class="page-toolbar" aria-label="角色筛选">
       <label>
         角色编码
