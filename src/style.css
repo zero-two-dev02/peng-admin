@@ -132,6 +132,20 @@ body {
   opacity: 0.6;
 }
 
+.text-button {
+  padding: 0;
+  color: #2563eb;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.text-button:hover {
+  color: #1d4ed8;
+}
+
 .user-page {
   display: grid;
   gap: 20px;
@@ -172,6 +186,17 @@ body {
   overflow-x: auto;
 }
 
+.detail-panel {
+  display: grid;
+  gap: 16px;
+  width: min(100%, 960px);
+  margin: 0 auto;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
 .table-header {
   display: flex;
   align-items: baseline;
@@ -180,8 +205,13 @@ body {
 }
 
 .table-header h1,
+.table-header h2,
 .table-header p {
   margin: 0;
+}
+
+.table-header h2 {
+  font-size: 24px;
 }
 
 table {
@@ -229,4 +259,71 @@ tbody tr:last-child td {
 .pagination button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.inline-form {
+  display: grid;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.inline-form h3 {
+  margin: 0;
+}
+
+.inline-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.inline-form input,
+.inline-form select {
+  width: min(100%, 360px);
+  padding: 10px 12px;
+  font: inherit;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.checkbox-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.checkbox-grid label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 500;
+}
+
+.checkbox-grid input {
+  width: auto;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-list span {
+  padding: 6px 10px;
+  font-size: 14px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+}
+
+.muted-text,
+.warning-text {
+  margin: 0;
+  color: #6b7280;
+}
+
+.warning-text {
+  color: #b45309;
 }

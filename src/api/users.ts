@@ -15,6 +15,23 @@ export interface UserPageItem {
   status: number
 }
 
+export interface UserRoleItem {
+  code: string
+  name: string
+  status: number
+}
+
+export interface UserUpdateRequest {
+  id: number
+  nickname: string
+  status: number
+}
+
+export interface UserRoleAssignRequest {
+  id: number
+  roleCodes: string[]
+}
+
 export async function getUserPage(
   request: UserPageRequest,
 ): Promise<CommonResult<PageResult<UserPageItem>>> {
@@ -23,6 +40,40 @@ export async function getUserPage(
     {
       params: request,
     },
+  )
+  return response.data
+}
+
+export async function getUserRoles(
+  id: number,
+): Promise<CommonResult<UserRoleItem[]>> {
+  const response = await http.get<CommonResult<UserRoleItem[]>>(
+    '/system/user/role-list',
+    {
+      params: {
+        id,
+      },
+    },
+  )
+  return response.data
+}
+
+export async function updateUser(
+  request: UserUpdateRequest,
+): Promise<CommonResult<boolean>> {
+  const response = await http.put<CommonResult<boolean>>(
+    '/system/user/update',
+    request,
+  )
+  return response.data
+}
+
+export async function assignUserRoles(
+  request: UserRoleAssignRequest,
+): Promise<CommonResult<boolean>> {
+  const response = await http.put<CommonResult<boolean>>(
+    '/system/user/assign-roles',
+    request,
   )
   return response.data
 }

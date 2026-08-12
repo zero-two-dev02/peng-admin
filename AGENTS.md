@@ -44,8 +44,13 @@
 - 已完成用户列表分页页：`GET /system/user/page`，支持用户名和状态筛选、第一页自动加载、上一页/下一页。
 - 已完成角色列表页：`GET /system/role/list`，展示启用角色的 code/name。
 - 已完成权限列表页：`GET /system/permission/list`，展示权限 code/name。
+- 已完成用户已分配角色查看：`GET /system/user/role-list`，展示用户当前角色 code/name/status。
+- 已完成角色已分配权限查看：`GET /system/role/permission-codes`，展示角色当前权限 code。
+- 已完成角色分页列表：`GET /system/role/page`，支持角色编码和状态筛选。
+- 已完成用户基本信息更新：`PUT /system/user/update`，只更新昵称和状态。
+- 已完成用户角色分配：`PUT /system/user/assign-roles`，用完整角色编码集合替换用户角色。
 
 ## 下一步
 
-- 继续从只读管理功能推进：用户角色查看或角色权限查看。
+- 继续推进角色权限分配、用户密码重置或角色/权限写操作；涉及授权、删除、重置密码等高风险写操作时先讲清楚边界。
 - 写接口前先读后端契约；涉及授权分配、删除、重置密码等高风险写操作时，先讲清楚边界再开发。
