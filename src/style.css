@@ -43,6 +43,18 @@ body {
   color: #6b7280;
 }
 
+.system-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: center;
+}
+
+.system-status p {
+  margin: 0;
+}
+
 .app-header {
   position: fixed;
   inset: 0 0 auto;

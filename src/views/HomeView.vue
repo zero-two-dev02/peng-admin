@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   getCurrentUser,
@@ -7,6 +7,7 @@ import {
   type CurrentUserResponse,
   updateCurrentUserPassword,
 } from '../api/auth'
+import { getSystemInfo } from '../api/system'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
@@ -19,6 +20,34 @@ const newPassword = ref('')
 const confirmNewPassword = ref('')
 const passwordMessage = ref('')
 const isUpdatingPassword = ref(false)
+const systemInfo = ref('')
+const systemMessage = ref('')
+const isLoadingSystemInfo = ref(false)
+
+async function handleLoadSystemInfo() {
+  if (isLoadingSystemInfo.value) {
+    return
+  }
+
+  systemInfo.value = ''
+  systemMessage.value = ''
+  isLoadingSystemInfo.value = true
+
+  try {
+    const result = await getSystemInfo()
+
+    if (result.code !== 0 || result.data === null) {
+      systemMessage.value = result.message
+      return
+    }
+
+    systemInfo.value = result.data
+  } catch {
+    systemMessage.value = 'System 服务不可达'
+  } finally {
+    isLoadingSystemInfo.value = false
+  }
+}
 
 async function handleLoadCurrentUser() {
   const accessToken = authStore.accessToken
@@ -127,12 +156,30 @@ async function handleUpdatePassword() {
     isUpdatingPassword.value = false
   }
 }
+
+onMounted(() => {
+  void handleLoadSystemInfo()
+})
 </script>
 
 <template>
   <main class="home-page">
     <h1>Yudao 管理后台</h1>
     <p>Vue 3 管理端学习项目</p>
+
+    <section class="system-status" aria-live="polite">
+      <p v-if="systemInfo">System 服务正常：{{ systemInfo }}</p>
+      <p v-else-if="systemMessage" class="warning-text">{{ systemMessage }}</p>
+      <p v-else class="muted-text">正在检测 System 服务...</p>
+      <button
+        class="text-button"
+        type="button"
+        :disabled="isLoadingSystemInfo"
+        @click="handleLoadSystemInfo"
+      >
+        {{ isLoadingSystemInfo ? '检测中...' : '重新检测' }}
+      </button>
+    </section>
 
     <button class="login-button" type="button" @click="handleLoadCurrentUser">
       读取当前用户
