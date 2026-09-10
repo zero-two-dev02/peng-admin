@@ -18,7 +18,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev --host 127.0.0.1 --port 5174 --strictPort",
+    command:
+      "node ./node_modules/vite/bin/vite.js --host 127.0.0.1 --port 5174 --strictPort",
     url: "http://127.0.0.1:5174",
     reuseExistingServer: true,
     timeout: 60000,
