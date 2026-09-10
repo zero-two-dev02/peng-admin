@@ -8,6 +8,13 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+node_modules.phase1-backup/
+.env.*
+!.env.example
+.pnpm-store/
+test-results/
+playwright-report/
+.local-run/
 dist
 dist-ssr
 *.local
