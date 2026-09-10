@@ -1,7 +1,8 @@
-import axios from 'axios'
+import axios from "axios";
 
 const http = axios.create({
-  baseURL: '/api',
-})
+  baseURL: "/api",
+  timeout: 15000,
+});
 
-export default http
+export default http;

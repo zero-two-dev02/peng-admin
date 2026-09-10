@@ -1,66 +1,72 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getCurrentUser, login } from '../api/auth'
-import { useAuthStore } from '../stores/auth'
+import { ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { getCurrentUser, login } from "../api/auth";
+import { useAuthStore } from "../stores/auth";
 
-const username = ref('')
-const password = ref('')
-const route = useRoute()
+import { safeReturnPath } from "../utils/safety";
+import { errorMessage } from "../utils/errors";
+
+const username = ref("");
+const password = ref("");
+const route = useRoute();
 const message = ref(
-  route.query.passwordUpdated === '1'
-    ? '密码修改成功，请使用新密码重新登录。'
-    : '',
-)
-const isSubmitting = ref(false)
+  route.query.passwordUpdated === "1"
+    ? "密码修改成功，请使用新密码重新登录。"
+    : route.query.reason === "expired"
+      ? "登录已失效，请重新登录。"
+      : "登录信息仅保存在内存，刷新页面后需要重新登录。",
+);
+const isSubmitting = ref(false);
 
-const authStore = useAuthStore()
-const router = useRouter()
+const authStore = useAuthStore();
+const router = useRouter();
 
 async function handleSubmit() {
   if (!username.value || !password.value) {
-    message.value = '请输入账号和密码。'
-    return
+    message.value = "请输入账号和密码。";
+    return;
   }
 
   if (isSubmitting.value) {
-    return
+    return;
   }
 
-  message.value = ''
-  isSubmitting.value = true
-  let sessionEstablished = false
+  message.value = "";
+  isSubmitting.value = true;
+  let sessionEstablished = false;
 
   try {
     const result = await login({
       username: username.value,
       password: password.value,
-    })
+    });
 
     if (result.code !== 0 || result.data === null) {
-      message.value = result.message
-      return
+      message.value = result.message;
+      return;
     }
 
-    authStore.setSession(result.data)
-    sessionEstablished = true
-    const currentUserResult = await getCurrentUser()
+    authStore.setSession(result.data);
+    sessionEstablished = true;
+    const currentUserResult = await getCurrentUser();
     if (currentUserResult.code !== 0 || currentUserResult.data === null) {
-      authStore.clearSession()
-      message.value = currentUserResult.message
-      return
+      authStore.clearSession();
+      message.value = currentUserResult.message;
+      return;
     }
 
-    authStore.setPermissions(currentUserResult.data.permissions)
-    password.value = ''
-    await router.push({ name: 'home' })
-  } catch {
+    authStore.setPermissions(currentUserResult.data.permissions);
+    password.value = "";
+    await router.push(safeReturnPath(route.query.returnTo));
+  } catch (failure) {
     if (sessionEstablished) {
-      authStore.clearSession()
+      authStore.clearSession();
     }
-    message.value = '无法连接服务器，请稍后重试。'
+    message.value = errorMessage(failure);
   } finally {
-    isSubmitting.value = false
+    password.value = "";
+    isSubmitting.value = false;
   }
 }
 </script>
@@ -68,14 +74,18 @@ async function handleSubmit() {
 <template>
   <main class="login-page">
     <section class="login-intro" aria-labelledby="login-intro-title">
-      <RouterLink class="login-brand" to="/login" aria-label="Yudao 管理后台登录页">
+      <RouterLink
+        class="login-brand"
+        to="/login"
+        aria-label="Yudao 管理后台登录页"
+      >
         <span class="app-brand-mark" aria-hidden="true">Y</span>
         <span>Yudao</span>
       </RouterLink>
       <div>
         <p class="login-kicker">ADMINISTRATION CONSOLE</p>
-        <h1 id="login-intro-title">清晰、安全地管理系统权限</h1>
-        <p>为用户、角色和权限提供统一的管理入口。</p>
+        <h1 id="login-intro-title">让运营工作清晰有序</h1>
+        <p>商品、公告、库存、会员积分与支付记录，统一协作入口。</p>
       </div>
     </section>
 
@@ -89,7 +99,12 @@ async function handleSubmit() {
       <form class="login-form" @submit.prevent="handleSubmit">
         <label class="form-field">
           <span>账号</span>
-          <input v-model.trim="username" type="text" autocomplete="username" required />
+          <input
+            v-model.trim="username"
+            type="text"
+            autocomplete="username"
+            required
+          />
         </label>
 
         <label class="form-field">
@@ -103,7 +118,7 @@ async function handleSubmit() {
         </label>
 
         <button class="login-button" type="submit" :disabled="isSubmitting">
-          {{ isSubmitting ? '登录中…' : '登录' }}
+          {{ isSubmitting ? "登录中…" : "登录" }}
         </button>
 
         <p v-if="message" class="form-message" role="status" aria-live="polite">
