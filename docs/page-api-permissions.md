@@ -35,8 +35,11 @@
 | /payment/audits          | GET /payment/admin/operation-audit                                                                  | payment:audit:read                                                                            |
 | /payment/callback-events | GET /payment/admin/callback-events                                                                  | payment:audit:read                                                                            |
 | /payment/reconciliation  | GET /payment/admin/callback-events/reconciliation                                                   | payment:audit:read                                                                            |
+| /order/orders            | GET /order/admin/orders；GET /order/admin/orders/{id}                                                | order:read                                                                                     |
 | /403、未匹配地址         | 无业务接口；403 可重新读取 me                                                                       | 不显示管理导航                                                                                |
 
 领域分页默认 20，既有 System 页为 10；筛选提交回第一页。新增领域查询使用筛选快照、取消信号与请求序号；既有 System 列表使用请求中禁用翻页/查询的方式串行处理。System/Notice 审计 success 参数为 0/1，Payment 审计为 boolean。所有金额提交整数分，显示元最多两位小数。
+
+订单管理仅精确筛选订单号，并按 `created_at DESC, id DESC` 稳定分页；详情按钮会重新读取详情接口。订单页面只展示 Order 服务自身安全事实，未知状态显示原始值，时间按后端返回值原样显示，不添加或减少八小时。
 
 禁止的浏览器接口：/payment/sandbox/callback、/order/internal/**、/inventory/internal/**。测试 Mock 仅用于隔离异常分支，不代表真实验收。

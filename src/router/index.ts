@@ -29,6 +29,7 @@ const pages = {
   "/payment/callback-events": () => import("../views/payment/EventsView.vue"),
   "/payment/reconciliation": () =>
     import("../views/payment/ReconciliationView.vue"),
+  "/order/orders": () => import("../views/order/OrdersView.vue"),
 };
 const routes: RouteRecordRaw[] = navigation.map((item) => ({
   path: item.path,

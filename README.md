@@ -73,5 +73,6 @@ location / {
 - [页面、接口、权限](docs/page-api-permissions.md)
 - [后端缺口与契约限制](docs/backend-gaps.md)
 - [验收记录](docs/acceptance.md)
+- [管理员订单查询与详情交付记录](docs/delivery/order-admin.md)
 
 隔离测试的假数据只存在 tests/，不会进入生产页面。Playwright 默认使用已安装的 Edge；如需其他浏览器，请调整测试配置并安装官方浏览器依赖。默认关闭 trace、视频、自动失败截图，以免真实凭据流入测试报告。

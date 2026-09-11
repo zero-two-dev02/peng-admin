@@ -103,4 +103,10 @@ export const navigation = [
     group: "支付",
     permission: "payment:audit:read",
   },
+  {
+    path: "/order/orders",
+    title: "订单管理",
+    group: "交易",
+    permission: "order:read",
+  },
 ] as const;

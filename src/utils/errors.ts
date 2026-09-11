@@ -9,7 +9,8 @@ export type ErrorKind =
   | "http"
   | "protocol";
 const forbiddenCodes = new Set([
-  1002002001, 1002001004, 1003002001, 1004002001, 1006002001, 1008002005,
+  1002002001, 1002001004, 1003002001, 1004002001, 1006002001, 1007002006,
+  1008002005,
 ]);
 export class ApiError extends Error {
   kind: ErrorKind;

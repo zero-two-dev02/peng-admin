@@ -45,3 +45,28 @@
 - Product 恢复动作没有由本轮浏览器截图独立验证；截图只证明归档状态及分页总数已显示正确。
 
 Mock 只用于隔离自动化测试，不能替代以上真实验收边界。
+
+## 2026-09-11 管理员订单查询与详情阶段
+
+本节是本阶段最新证据；上文保留为 2026-09-02 的历史验收记录，不以历史数字覆盖本阶段结果。
+
+### 本阶段结果
+
+| 验收层级 | 结果 | 证据与边界 |
+| --- | --- | --- |
+| 源码与契约核对 | 通过 | 已核对 `trade_order` 的 V1/V3/V5 Flyway DDL、`TradeOrderDO`、`TradeOrderMapper` 与既有买家查询；管理员查询只读映射安全订单事实，不读取其他服务数据库。 |
+| 后端自动化测试 | 通过 | 用户指定命令 `mvn -s maven-settings.xml -pl yudao-module-order/yudao-module-order-server,yudao-module-system/yudao-module-system-server -am test`；Common 15、Web Starter 14、System 271、Inventory 49、Payment 33、Order 34，共 416 项通过。 |
+| 前端单元/组件测试 | 通过 | `pnpm test`，6 个文件、57 项通过；覆盖菜单权限、请求参数、状态标签和错误权限分类。 |
+| 前端类型检查 | 通过 | `pnpm typecheck`，`vue-tsc -b --pretty false` 退出码 0。 |
+| 前端生产构建 | 通过 | `pnpm build`，Vite 8.2.0 转换 1721 个模块并生成订单页面产物。 |
+| 隔离浏览器测试 | 通过 | `pnpm test:e2e`，20 项 Playwright/Chromium 测试通过；测试 API 使用隔离 fixture，不能替代真实后端联调。为避免本机 5174 端口上的其他应用被误测，E2E Vite 服务固定为 5175。 |
+| 真实数据库迁移 | 通过 | 从本阶段新启动的隔离 MySQL 读取 Flyway 结果：System=43、Order=6；四个临时交付容器和业务进程已在验收后清理。 |
+| 真实 HTTP 联调 | 通过 | 经 Gateway → Order → MySQL/System 完成管理员登录、分页、订单号/用户/状态筛选、详情重读、敏感字段排除、非法分页/ID、不存在订单、匿名和临时无 `order:read` 用户边界。临时用户已删除。 |
+| 真实浏览器验收 | 通过 | 本阶段新启动的 Vite 页面由 Edge 真实浏览器访问；登录后打开 `/order/orders`，确认列表请求参数、详情重新读取和无支付/退款/发货/库存操作按钮。 |
+
+### 交付边界
+
+- `GET /order/admin/orders` 只做订单号精确匹配、用户 ID/状态精确筛选，按 `created_at DESC, id DESC` 稳定分页并保留真实 `total`。
+- `GET /order/admin/orders/{id}` 重新读取详情；页面不以列表行冒充详情，不显示用户昵称、支付、库存、物流或退款信息。
+- 返回值不包含 `lastRecoveryError`、Token、Authorization 或服务内部运维字段；时间按后端值原样显示，未知状态显示原始值。
+- 真实 Flyway、HTTP 联调和真实浏览器验收在补做前均不能写入简历或描述为生产能力。

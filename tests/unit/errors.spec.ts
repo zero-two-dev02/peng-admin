@@ -13,7 +13,8 @@ describe("error classification", () => {
     (code) => expect(businessError(code, "unavailable").kind).toBe("business"),
   );
   it.each([
-    1002002001, 1002001004, 1003002001, 1004002001, 1006002001, 1008002005,
+    1002002001, 1002001004, 1003002001, 1004002001, 1006002001, 1007002006,
+    1008002005,
   ])("classifies denied %s", (code) =>
     expect(businessError(code, "denied").kind).toBe("permission"),
   );

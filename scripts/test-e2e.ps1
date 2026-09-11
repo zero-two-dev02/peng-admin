@@ -13,7 +13,7 @@ if (-not (Test-Path -LiteralPath $viteEntry -PathType Leaf)) {
 
 try {
     $viteProcess = Start-Process -FilePath $nodeExecutable -ArgumentList @(
-        $viteEntry, '--host', '127.0.0.1', '--port', '5174', '--strictPort'
+        $viteEntry, '--host', '127.0.0.1', '--port', '5175', '--strictPort'
     ) -WorkingDirectory $frontendRoot -WindowStyle Hidden -PassThru
 
     $ready = $false
@@ -22,7 +22,7 @@ try {
             throw "Vite exited before readiness with code $($viteProcess.ExitCode)."
         }
         try {
-            $response = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:5174' -TimeoutSec 1
+            $response = Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:5175' -TimeoutSec 1
             if ($response.StatusCode -eq 200) {
                 $ready = $true
                 break
@@ -32,7 +32,7 @@ try {
         }
     }
     if (-not $ready) {
-        throw 'Vite did not become ready on http://127.0.0.1:5174.'
+        throw 'Vite did not become ready on http://127.0.0.1:5175.'
     }
 
     & pnpm exec playwright test

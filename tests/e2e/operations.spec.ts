@@ -33,7 +33,12 @@ const allPermissions = [
   ]),
 ];
 const ok = (data: unknown) => ({ code: 0, message: "success", data });
-async function fixture(page: Page, permissions = allPermissions) {
+type FixtureOptions = { orderTotal?: number; orderStatus?: number };
+async function fixture(
+  page: Page,
+  permissions = allPermissions,
+  options: FixtureOptions = {},
+) {
   await page.route(
     (url) => url.pathname.startsWith("/api/"),
     async (route) => {
@@ -103,6 +108,53 @@ async function fixture(page: Page, permissions = allPermissions) {
           succeededPaymentCount: 2,
           callbackEventCount: 1,
           difference: 1,
+        };
+      else if (path === "/order/admin/orders") {
+        const order = {
+          id: 700101,
+          orderNo: "FIXTURE-ORDER-ADMIN",
+          userId: 900002,
+          spuId: 800001,
+          skuId: 800002,
+          productName: "隔离商品",
+          skuSpecification: "标准",
+          unitPriceFen: 29,
+          quantity: 2,
+          totalPriceFen: 58,
+          status: options.orderStatus ?? 4,
+          createdAt: "2026-09-11T10:00:00",
+          updatedAt: "2026-09-11T10:01:00",
+          expiresAt: null,
+          cancellationId: null,
+          cancelReason: null,
+          cancellationRequestedAt: null,
+          cancelledAt: null,
+        };
+        data = {
+          list: options.orderTotal === 0 ? [] : [order],
+          total: options.orderTotal ?? 1,
+        };
+      }
+      else if (path === "/order/admin/orders/700101")
+        data = {
+          id: 700101,
+          orderNo: "FIXTURE-ORDER-ADMIN",
+          userId: 900002,
+          spuId: 800001,
+          skuId: 800002,
+          productName: "隔离商品",
+          skuSpecification: "标准",
+          unitPriceFen: 29,
+          quantity: 2,
+          totalPriceFen: 58,
+          status: options.orderStatus ?? 4,
+          createdAt: "2026-09-11T10:00:00",
+          updatedAt: "2026-09-11T10:01:00",
+          expiresAt: null,
+          cancellationId: null,
+          cancelReason: null,
+          cancellationRequestedAt: null,
+          cancelledAt: null,
         };
       else if (path === "/system/user/session-list")
         data = [{ expiresAt: "2099-01-01T00:00:00Z" }];
@@ -196,6 +248,94 @@ test("backend unavailable is not represented as empty data", async ({
   await expect(page.getByText(/服务器返回 HTTP 503/)).toBeVisible();
   await expect(page.getByText("当前筛选条件下暂无数据")).toHaveCount(0);
   await expect(page).toHaveURL(/\/payment\/orders/);
+});
+test("order query uses exact filters, database total pagination and detail reread", async ({
+  page,
+}) => {
+  await fixture(page, allPermissions, { orderTotal: 41 });
+  await login(page, "/order/orders");
+  await expect(
+    page.getByRole("heading", { name: "订单管理", exact: true }),
+  ).toBeVisible();
+
+  await page.getByLabel("订单号", { exact: true }).fill("FIXTURE-ORDER-ADMIN");
+  await page.getByLabel("用户 ID", { exact: true }).fill("900002");
+  await page
+    .getByRole("combobox", { name: "订单状态", exact: true })
+    .selectOption("4");
+  const filteredRequest = page.waitForRequest(
+    (request) =>
+      request.method() === "GET" &&
+      request.url().includes("/order/admin/orders"),
+  );
+  await page.getByRole("button", { name: "查询", exact: true }).click();
+  const filteredUrl = new URL((await filteredRequest).url());
+  expect(filteredUrl.searchParams.get("orderNo")).toBe("FIXTURE-ORDER-ADMIN");
+  expect(filteredUrl.searchParams.get("userId")).toBe("900002");
+  expect(filteredUrl.searchParams.get("status")).toBe("4");
+  expect(filteredUrl.searchParams.get("pageNo")).toBe("1");
+  expect(filteredUrl.searchParams.get("pageSize")).toBe("20");
+  await expect(page.getByText("共 41 条")).toBeVisible();
+
+  const pageRequest = page.waitForRequest(
+    (request) =>
+      request.method() === "GET" &&
+      new URL(request.url()).searchParams.get("pageNo") === "2",
+  );
+  await page.locator(".page-pagination .btn-next").click();
+  await pageRequest;
+
+  const detailRequest = page.waitForRequest(
+    (request) =>
+      request.method() === "GET" &&
+      new URL(request.url()).pathname.endsWith("/order/admin/orders/700101"),
+  );
+  await page.getByRole("button", { name: "详情", exact: true }).click();
+  await detailRequest;
+  await expect(page.getByRole("heading", { name: "取消信息", exact: true })).toBeVisible();
+  await expect(page.getByText("仅展示订单服务自身事实")).toBeVisible();
+  await expect(
+    page.locator("#main-content").getByRole("button", { name: /付款成功|退款|发货/ }),
+  ).toHaveCount(0);
+  await expect(
+    page.locator("#main-content").getByRole("link", { name: /付款成功|退款|发货/ }),
+  ).toHaveCount(0);
+});
+test("order page shows unknown status and distinct empty/error states", async ({
+  page,
+}) => {
+  await fixture(page, allPermissions, { orderStatus: 99 });
+  await login(page, "/order/orders");
+  await expect(page.getByText("未知状态（99）", { exact: true })).toBeVisible();
+
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await expect(page).toHaveURL(/\/login/);
+  await page.route("**/api/order/admin/orders*", (route) =>
+    route.fulfill({ status: 503, json: { message: "down" } }),
+  );
+  await page.getByLabel("账号", { exact: true }).fill("fixture_admin");
+  await page.getByLabel("密码", { exact: true }).fill("Fixture-only-123");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
+  await expect(page.getByText(/服务器返回 HTTP 503/)).toBeVisible();
+  await expect(page.getByText("当前筛选条件下暂无数据")).toHaveCount(0);
+
+  await page.unroute("**/api/order/admin/orders*");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await expect(page).toHaveURL(/\/login/);
+  await page.route("**/api/order/admin/orders*", (route) =>
+    route.fulfill({ json: ok({ list: [], total: 0 }) }),
+  );
+  await page.getByLabel("账号", { exact: true }).fill("fixture_admin");
+  await page.getByLabel("密码", { exact: true }).fill("Fixture-only-123");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
+  await expect(page.getByText("当前筛选条件下暂无数据")).toBeVisible();
+});
+test("order route redirects users without order:read to 403", async ({ page }) => {
+  await fixture(page, []);
+  await login(page, "/order/orders");
+  await expect(page).toHaveURL(/\/403$/);
 });
 test("auth-service outage keeps session, real invalid-token clears it", async ({
   page,
